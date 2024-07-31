@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Massimo Bonding</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,11 +29,17 @@
         label {
             display: block;
             margin-bottom: 1rem;
+            width: 90%;
+        }
+        label p{
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.5rem;
         }
         label span {
             display: block;
-            margin-bottom: 0.5rem;
             color: #333;
+            margin-bottom: 0;
         }
         label input,
         label select {
@@ -61,22 +67,29 @@
                 <h2>Simulatore Bonding Curve</h2>
                 <form action="">
                     <label for=""><span>Initial Price</span>
-                        <input type="text" name="initialPrice" id="initialPrice" value="2">
+                        <p>Prezzo Iniziale</p>
+                        <input type="number" type="text" name="initialPrice" id="initialPrice" value="2">
                     </label>
                     <label for="minPrice"><span>Min Price</span>
-                        <input type="text" name="minPrice" id="minPrice" value="1">
+                        <p>Prezzo minimo sotto il quale l'aft non scende</p>
+                        <input type="number" type="text" name="minPrice" id="minPrice" value="1">
                     </label>
                      <label for="priceAdjustmentFactor"><span>Price Adjustment Factor</span>
-                        <input type="text" name="priceAdjustmentFactor" id="priceAdjustmentFactor" value="1">
+                        <p>Determina il tasso di diminuzione del prezzo al secondo. Un valore più alto significa una diminuzione più rapida.</p>
+                        <input type="number" type="text" name="priceAdjustmentFactor" id="priceAdjustmentFactor" value="1">
                     </label>
-                     <label for="priceIncreaseFactor"><span>Price Increase Factor</span>
-                        <input type="text" name="priceIncreaseFactor" id="priceIncreaseFactor" value="1">
+                     <label for="priceIncreaseFactor">
+                        <span>Price Increase Factor</span>
+                        <p>Scala l'aumento del prezzo. Più alto è questo fattore, più ogni nuovo mint aumenterà il prezzo.</p>
+                        <input type="number" type="text" name="priceIncreaseFactor" id="priceIncreaseFactor" value="1">
                     </label>
                     <label for="decreaseDaysFactor"><span>Decrease Days Factor</span>
-                        <input type="text" name="decreaseDaysFactor" id="decreaseDaysFactor" value="100">
+                        <p>Definisce per quanti giorni il prezzo deve essere adeguato per riflettere l'inattività.</p>
+                        <input type="number" type="text" name="decreaseDaysFactor" id="decreaseDaysFactor" value="100">
                     </label>
                     <label for="decreaseDaysFactor"><span>Max Supply</span>
-                        <input type="text" name="maxSupply" id="maxSupply" value="10000000">
+                        <p>Massimo numero di token</p>
+                        <input type="number" type="text" name="maxSupply" id="maxSupply" value="100000000">
                     </label>
 
                     <label for="submit">
@@ -91,7 +104,7 @@
                         <select name="buyDate" id="buyDate"></select>
                     </label>
                     <label for="buyAmount"><span>Quantità</span>
-                        <input type="text" name="buyAmount" id="buyAmount" value="1000">
+                        <input type="number" type="text" name="buyAmount" id="buyAmount" value="1000">
                     </label>
                     <label for="submit">
                         <button id="simulateBuy" type="submit" >Aggiungi</button>
@@ -199,6 +212,7 @@
                 }
                 let price;
                 if ( buyIndexes.includes(i) ) {
+                    // if the price was adjusted by a buy, keep the same price
                     price = pricesArr[i]
                 } else {
                     lastPrice = pricesArr[i-1]

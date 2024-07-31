@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .d-flex {
+            display: flex;
+        }
+        .dgrid  {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            column-count: repeat(2, 1fr);
+        }
+        .column {
+            padding: 1rem;
+        }
+        .justify-between {
+            justify-content: space-between;
+        }
+        .container {
+            width: 80vw;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 1rem;
+        }
+        label span {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        label input,
+        label select {
+            width: 60%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            background-color: red;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dgrid">
+
+            <div class="inputs">
+                <h2>Simulatore Bonding Curve</h2>
+                <form action="">
+                    <label for=""><span>Initial Price</span>
+                        <input type="text" name="initialPrice" id="initialPrice" value="2">
+                    </label>
+                    <label for="minPrice"><span>Min Price</span>
+                        <input type="text" name="minPrice" id="minPrice" value="1">
+                    </label>
+                     <label for="priceAdjustmentFactor"><span>Price Adjustment Factor</span>
+                        <input type="text" name="priceAdjustmentFactor" id="priceAdjustmentFactor" value="1">
+                    </label>
+                     <label for="priceIncreaseFactor"><span>Price Increase Factor</span>
+                        <input type="text" name="priceIncreaseFactor" id="priceIncreaseFactor" value="1">
+                    </label>
+                    <label for="decreaseDaysFactor"><span>Decrease Days Factor</span>
+                        <input type="text" name="decreaseDaysFactor" id="decreaseDaysFactor" value="100">
+                    </label>
+                    <label for="decreaseDaysFactor"><span>Max Supply</span>
+                        <input type="text" name="maxSupply" id="maxSupply" value="10000000">
+                    </label>
+
+                    <label for="submit">
+                        <button id="submit" type="submit" >Calcola</button>
+                    </label>
+                </form>
+                <br>
+
+                <h3>Simula Acquisto</h3>
+                <form action="">
+                    <label for="buyDate"><span>Data acquisto</span>
+                        <select name="buyDate" id="buyDate"></select>
+                    </label>
+                    <label for="buyAmount"><span>Quantità</span>
+                        <input type="text" name="buyAmount" id="buyAmount" value="1000">
+                    </label>
+                    <label for="submit">
+                        <button id="simulateBuy" type="submit" >Aggiungi</button>
+                    </label>
+                </form>
+
+            </div>
+            <div class="chart">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+      </div>
+      
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      
+      <script>
+        const maxSupply = parseFloat( document.getElementById('maxSupply').value )
+        const priceIncreaseFactor = parseFloat( document.getElementById('priceIncreaseFactor').value )
+        const ctx = document.getElementById('myChart');
+        const daysAhead = 90;
+        let nowDate = new Date();
+        // date in format yyyy-mm-dd
+        nowDate = nowDate.toISOString().slice(0,10);
+        // fill an array of dates from nowDate to 180 days after
+        let dates = [];
+        let buyIndexes = [];
+        for (let i = 0; i < daysAhead; i++) {
+          let date = new Date(nowDate);
+          date.setDate(date.getDate() + i);
+          dates.push(date.toISOString().slice(0,10));
+        }
+
+        // add dates to select
+        let select = document.getElementById('buyDate');
+        dates.forEach(date => {
+            let option = document.createElement('option');
+            option.value = date;
+            option.text = date;
+            select.appendChild(option);
+        })
+
+
+        function dateToTimestamp(date) {
+            return new Date(date).getTime() / 1000
+        }
+
+        function getPrice(lastPrice, lastTimestamp, nowTimestamp, priceAdjustmentFactor, decreaseDaysFactor, minPrice) {
+            const secondsSinceLastTrade = nowTimestamp - lastTimestamp
+            const secondsInADay = 86400
+            let priceDecrease = (lastPrice * secondsSinceLastTrade * priceAdjustmentFactor) / (decreaseDaysFactor * secondsInADay )
+
+            if ( lastPrice > priceDecrease ) {
+                newPrice = lastPrice - priceDecrease
+            } else {
+                newPrice = minPrice
+            }
+
+            if (newPrice > minPrice) {
+                return newPrice
+            } else {
+                return minPrice
+            }
+        }
+
+        function adjustPrice(price, amount, priceIncreaseFactor, maxSupply) {
+            let priceIncrease = ( amount * price * priceIncreaseFactor ) / maxSupply
+            return price + priceIncrease
+        }
+
+
+
+        let prices = [...Array(dates.length).keys()].map(i => 0)
+
+        const labels = dates;
+        const values = [65, 59, 80, 81, 56, 55, 40]
+        let data = {
+        labels: labels,
+        datasets: [{
+            label: 'Price',
+            data: values,
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+        };
+        function generateGraph(pricesArr) {
+       
+            let initialPrice = parseFloat( document.getElementById('initialPrice').value )
+            let priceAdjustmentFactor = parseFloat(document.getElementById('priceAdjustmentFactor').value)
+            let decreaseDaysFactor = parseFloat(document.getElementById('decreaseDaysFactor').value)
+            let minPrice = parseFloat(document.getElementById('minPrice').value)
+            
+
+            let lastPrice = initialPrice
+            let lastTimestamp = dateToTimestamp(nowDate)
+            let nowTimestamp = dateToTimestamp(nowDate)
+            //let price = getPrice(lastPrice, lastTimestamp, nowTimestamp, priceAdjustmentFactor, decreaseDaysFactor, minPrice)
+            // calculate price for every date in dates
+            for (let i = 0; i < dates.length; i++) {
+                nowTimestamp = dateToTimestamp(dates[i])
+                lastTimestamp =  dateToTimestamp(dates[i-1])
+                if ( i == 0 ) {
+                    pricesArr[i] = initialPrice
+                    continue
+                }
+                let price;
+                if ( buyIndexes.includes(i) ) {
+                    price = pricesArr[i]
+                } else {
+                    lastPrice = pricesArr[i-1]
+                    price = getPrice(lastPrice, lastTimestamp, nowTimestamp, priceAdjustmentFactor, decreaseDaysFactor, minPrice)
+                }
+                 pricesArr[i] = price
+            }
+            data.datasets[0].data = pricesArr
+            console.log(data.datasets[0].data)
+            chart.update()
+        }
+        button = document.getElementById('submit')
+        button.addEventListener('click', function(e) {
+            generateGraph(prices)
+            e.preventDefault()
+        })
+       const chart = new Chart(ctx, {
+          type: 'line',
+          data: data,
+        });
+        generateGraph(prices)
+        simulateButton = document.getElementById('simulateBuy')
+        simulateButton.addEventListener('click', function(e) {
+            let buyDate = document.getElementById('buyDate').value
+            let buyAmount = parseFloat(document.getElementById('buyAmount').value)
+            let price = data.datasets[0].data[dates.indexOf(buyDate)]
+            let newPrice = adjustPrice(price, buyAmount, priceIncreaseFactor, maxSupply)
+            let index = dates.indexOf(buyDate)
+            if (!buyIndexes.includes(index) ) buyIndexes.push(index)
+            prices[index] = newPrice
+            console.log("New price", newPrice + " at index " + index)
+            generateGraph(prices)
+            e.preventDefault()
+        })
+      </script>
+</body>
+</html>

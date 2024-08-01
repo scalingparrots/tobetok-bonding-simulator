@@ -68,20 +68,20 @@
                 <form action="">
                     <label for=""><span>Initial Price</span>
                         <p>Prezzo Iniziale</p>
-                        <input type="number" type="text" name="initialPrice" id="initialPrice" value="2">
+                        <input type="number" type="text" name="initialPrice" id="initialPrice" value="1">
                     </label>
                     <label for="minPrice"><span>Min Price</span>
                         <p>Prezzo minimo sotto il quale l'aft non scende</p>
-                        <input type="number" type="text" name="minPrice" id="minPrice" value="1">
+                        <input type="number" type="text" name="minPrice" id="minPrice" value="0.95">
                     </label>
                      <label for="priceAdjustmentFactor"><span>Price Adjustment Factor</span>
                         <p>Determina il tasso di diminuzione del prezzo al secondo. Un valore più alto significa una diminuzione più rapida.</p>
-                        <input type="number" type="text" name="priceAdjustmentFactor" id="priceAdjustmentFactor" value="1">
+                        <input type="number" type="text" name="priceAdjustmentFactor" id="priceAdjustmentFactor" value="0.06">
                     </label>
                      <label for="priceIncreaseFactor">
                         <span>Price Increase Factor</span>
                         <p>Scala l'aumento del prezzo. Più alto è questo fattore, più ogni nuovo mint aumenterà il prezzo.</p>
-                        <input type="number" type="text" name="priceIncreaseFactor" id="priceIncreaseFactor" value="1">
+                        <input type="number" type="text" name="priceIncreaseFactor" id="priceIncreaseFactor" value="10000">
                     </label>
                     <label for="decreaseDaysFactor"><span>Decrease Days Factor</span>
                         <p>Definisce per quanti giorni il prezzo deve essere adeguato per riflettere l'inattività.</p>
@@ -104,7 +104,7 @@
                         <select name="buyDate" id="buyDate"></select>
                     </label>
                     <label for="buyAmount"><span>Quantità</span>
-                        <input type="number" type="text" name="buyAmount" id="buyAmount" value="1000">
+                        <input type="number" type="text" name="buyAmount" id="buyAmount" value="10">
                     </label>
                     <label for="submit">
                         <button id="simulateBuy" type="submit" >Aggiungi</button>
@@ -121,8 +121,7 @@
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       
       <script>
-        const maxSupply = parseFloat( document.getElementById('maxSupply').value )
-        const priceIncreaseFactor = parseFloat( document.getElementById('priceIncreaseFactor').value )
+
         const ctx = document.getElementById('myChart');
         const daysAhead = 90;
         let nowDate = new Date();
@@ -236,14 +235,17 @@
         generateGraph(prices)
         simulateButton = document.getElementById('simulateBuy')
         simulateButton.addEventListener('click', function(e) {
+            const maxSupply = parseFloat( document.getElementById('maxSupply').value )
+            const priceIncreaseFactor = parseFloat( document.getElementById('priceIncreaseFactor').value )
             let buyDate = document.getElementById('buyDate').value
             let buyAmount = parseFloat(document.getElementById('buyAmount').value)
             let price = data.datasets[0].data[dates.indexOf(buyDate)]
             let newPrice = adjustPrice(price, buyAmount, priceIncreaseFactor, maxSupply)
             let index = dates.indexOf(buyDate)
             if (!buyIndexes.includes(index) ) buyIndexes.push(index)
+            const oldPrice = prices[index]
             prices[index] = newPrice
-            console.log("New price", newPrice + " at index " + index)
+            console.log("New price from " + oldPrice + " to " +  newPrice + " at index " + index + " yesterday price " + prices[index-1] + " with a percentage change of " + (newPrice - prices[index-1]) / prices[index-1] * 100 + "% instead of " + (oldPrice - prices[index-1]) / prices[index-1] * 100)
             generateGraph(prices)
             e.preventDefault()
         })
